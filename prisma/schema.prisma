@@ -1,0 +1,46 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MerchantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum KYCStatus {
+  NOT_VERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Merchant {
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  businessName      String
+  email             String         @unique
+  phone             String
+  status            MerchantStatus @default(PENDING)
+  kycStatus         KYCStatus      @default(NOT_VERIFIED)
+  currency          String         @default("USD")
+  country           String
+  apiKey            String         @unique
+  apiSecret         String
+  webhookUrl        String?
+  webhookSecret     String?
+  settlementSchedule String        @default("DAILY")
+  settlementCurrency String        @default("USD")
+  transactionLimit  Float          @default(10000)
+  dailyLimit        Float          @default(100000)
+  monthlyLimit      Float          @default(1000000)
+  balance           Float          @default(0)
+  reserveBalance    Float          @default(0)
+  feePercentage     Float          @default(2.9)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}

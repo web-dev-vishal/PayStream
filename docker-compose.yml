@@ -62,7 +62,7 @@ services:
       JWT_SECRET: your_super_secret_jwt_key_change_in_production
       JWT_REFRESH_SECRET: your_super_secret_refresh_key_change_in_production
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
     depends_on:
       - mongodb
       - redis
@@ -87,6 +87,7 @@ services:
       REDIS_PASSWORD: paystream_redis_pass
       RABBITMQ_URI: amqp://admin:paystream_rabbitmq_pass@rabbitmq:5672
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
     depends_on:
       - mongodb
       - redis
