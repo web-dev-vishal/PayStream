@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: paystream-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: paystream_mongo_pass
+      MONGO_INITDB_DATABASE: paystream
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - paystream-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: paystream-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass paystream_redis_pass
+    volumes:
+      - redis_data:/data
+    networks:
+      - paystream-network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: paystream-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: paystream_rabbitmq_pass
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - paystream-network
+
+  paystream-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: paystream-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      MONGODB_URI: mongodb://admin:paystream_mongo_pass@mongodb:27017/paystream?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: paystream_redis_pass
+      RABBITMQ_URI: amqp://admin:paystream_rabbitmq_pass@rabbitmq:5672
+      JWT_SECRET: your_super_secret_jwt_key_change_in_production
+      JWT_REFRESH_SECRET: your_super_secret_refresh_key_change_in_production
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    networks:
+      - paystream-network
+
+  paystream-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: paystream-worker
+    restart: always
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://admin:paystream_mongo_pass@mongodb:27017/paystream?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: paystream_redis_pass
+      RABBITMQ_URI: amqp://admin:paystream_rabbitmq_pass@rabbitmq:5672
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    volumes:
+      - ./src:/app/src
+    networks:
+      - paystream-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  paystream-network:
+    driver: bridge
