@@ -206,3 +206,5 @@ For issues or questions, check the logs first:
 ```bash
 tail -f logs/combined.log
 ```
+
+I'll see you in the next one! 🚀
